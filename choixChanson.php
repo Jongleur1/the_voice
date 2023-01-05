@@ -4,10 +4,10 @@ if(!$_SESSION["user"]){
     header("location: login.php");
     exit;
 }
+
  // récupération id de l'utilisateur
  $iduser = $_SESSION["user"]["id"];
 
-var_dump($_POST);
 require_once "bddConnect.php";
     // $requete = $connexion->prepare("SELECT * FROM `users` WHERE id = $iduser");
     // $requete->execute();
@@ -16,30 +16,27 @@ require_once "bddConnect.php";
     //     header("location: index.php");
     // }
 
-if(!empty($_POST)){
-    if(isset($_POST["artiste"],$_POST["titre"],$_POST["chanson"]) && !empty($_POST["chanson"]) && !empty($_POST["artiste"]) && !empty($_POST["titre"])){
+if(!empty($_GET)){
+    if(isset($_GET["artiste"],$_GET["titre"],$_GET["img"]) && !empty($_GET["artiste"]) && !empty($_GET["titre"]) && !empty($_GET["img"])){
         // insertion du nom de l'artiste
-        $artiste = ucfirst(strip_tags(strtolower($_POST["artiste"])));
+        $artiste = ucfirst(strip_tags(strtolower($_GET["artiste"])));
        // insertion du titre de la chanson
-        $titre = ucfirst(strip_tags(strtolower($_POST["titre"])));
-        
-        // insertion de la chanson choisie
-        $chansonChoisie = strip_tags($_POST["chanson"]);
-
+        $titre = ucfirst(strip_tags(strtolower($_GET["titre"])));
+                
         // Vérif si chanson déjà envoyé
        
-        $req = $connexion->prepare("SELECT `choix` FROM `choixMusique` WHERE id_user = $iduser");
+        $req = $connexion->prepare("SELECT `img` FROM `choixMusique` WHERE id_user = $iduser");
         $req->execute();
         $musiquePresente = $req->fetch();
         if($musiquePresente){
             die("Chanson déjà selectionné, veuillez attendre que l'admin valide votre choix");
         } 
             
-        $sql = "INSERT INTO `choixMusique` (`id_user`,`artiste`,`titre`,`choix`,`chansonEnvoyée`) VALUES( $iduser ,:artiste,:titre,:choix,'NULL') ";
+        $sql = "INSERT INTO `choixMusique` (`id_user`,`artiste`,`titre`,`img`,`chansonEnvoyée`) VALUES( $iduser ,:artiste,:titre,:img,'NULL') ";
         $requete = $connexion->prepare($sql);
         $requete->bindValue(":artiste",$artiste,PDO::PARAM_STR);
         $requete->bindValue(":titre",$titre,PDO::PARAM_STR);
-        $requete->bindValue(":choix",$chansonChoisie,PDO::PARAM_STR);
+        $requete->bindValue(":img",$_GET["img"]);
         $requete->execute();
         
         $req = $connexion->prepare("UPDATE `users` SET `choixSupprime` = 0  WHERE id = $iduser");
@@ -73,11 +70,11 @@ if(!empty($_POST)){
     $etatChoix = $req->fetch();
 
 
-    $req = $connexion->prepare("SELECT `choix`FROM `choixMusique` WHERE id_user = $iduser");
+    $req = $connexion->prepare("SELECT `img` FROM `choixMusique` WHERE id_user = $iduser");
     $req->execute();
     $musiquePresente = $req->fetch();
    
-    if($musiquePresente["choix"] !==NULL && $etatChoix["statutChoixChanson"] === 0){ ?>
+    if($musiquePresente["img"] !==NULL && $etatChoix["statutChoixChanson"] === 0){ ?>
     <h3>Votre musique est en cours de validation ...</h3>
     <p>Un admin va étudier votre demande, revenez ultérieurement pour vérifier l'avancé de votre demande.</p>
    <?php }else if($etatChoix["statutChoixChanson"] === 1 && $musiquePresente != NULL ){?>
@@ -96,13 +93,13 @@ if($etatChoix["choixSupprime"] === 1 && !$musiquePresente){ ?>
      
           <div class="container">
              <form method="POST" action="#">
-                    <label class="form-label" for="artiste">Artiste</label>
-                    <input type="text" name="artiste" id="artiste">
-                    <label for="titre">Titre</label>
-                    <input type="text" name="titre" id="titre">
-                    <input type="text" name="chanson" id="chanson">
-                    <!-- <select name="chanson" id="search"></select>                     -->
-                    <button type="submit">Valider</button>
+                  
+            <label for="artiste">Artiste</label>
+            <input type="text" name="artiste" id="artiste">
+            <label for="titre">Titre</label>
+            <input type="text" name="titre" id="titre">
+            <button type="submit">Rechercher</button>
+
             </form>  
             </div>
     <?php }else if($etatChoix["choixSupprime"] === 0 && !$musiquePresente){ ?>
@@ -110,19 +107,68 @@ if($etatChoix["choixSupprime"] === 1 && !$musiquePresente){ ?>
         <h3>Choisi la chanson que tu souhaites chanter ! </h3>
      
      <div class="container">
-        <form method="POST" action="#">
-               <label class="form-label" for="artiste">Artiste</label>
-               <input type="text" name="artiste" id="artiste">
-               <label for="titre">Titre</label>
-               <input type="text" name="titre" id="titre">
-               <input type="text" name="chanson" id="chanson">
-               <!-- <select name="chanson" id="search"></select>                -->
-               <button type="submit">Valider</button>
+
+        <form method="POST" action="#">        
+        <label for="artiste">Artiste</label>
+        <input type="text" name="artiste" id="artiste">
+        <label for="titre">Titre</label>
+        <input type="text" name="titre" id="titre">
+        <button type="submit">Rechercher</button>
+ 
        </form>  
        </div>
        <?php } ?>
 
+       <?php 
+$url = "https://shazam.p.rapidapi.com/search?term=".str_replace(' ', '%20',$_POST['titre'])."%20".str_replace(' ', '%20',$_POST['artiste'])."&locale=fr-FR&offset=0&limit=5";
+$curl = curl_init();
+
+curl_setopt_array($curl, [
+    CURLOPT_URL => $url,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_ENCODING => "",
+    CURLOPT_MAXREDIRS => 10,
+    CURLOPT_TIMEOUT => 30,
+    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+    CURLOPT_CUSTOMREQUEST => "GET",
+    CURLOPT_HTTPHEADER => [
+        "X-RapidAPI-Host: shazam.p.rapidapi.com",
+        "X-RapidAPI-Key: 5a0bb38e4emsh68c798a81b128acp1f9d4bjsn1e92f0153710"
+    ],
+]);
+
+$response = curl_exec($curl);
+$parsee=json_decode(curl_exec($curl), true);
+$data = $parsee["tracks"]["hits"];
+
+foreach($data as $dat){
+    $artiste = $dat["track"]["subtitle"];
+    $titre = $dat["track"]["title"];
+    $img = $dat["track"]["share"]["image"];
+    $extrait = $dat["track"]["hub"]["actions"]["1"]["uri"];
     
+    echo
+    "
+    <div class='text-center my-3'>
+    <img src='$img'  style='width:200px' class='card-img-top'>
+    <div class='card-body '>
+    <h5 style='margin:0' name ='artiste' class='card-title  '>$artiste</h5>
+    <p class='card-text'> $titre</p>
+    <audio controls='controls'> <source src='$extrait'></audio><br>
+    <a href='choixChanson.php?img=".$img."&titre=".$titre."&artiste=".$artiste."' class='btn btn-primary'>Valider</a>
+    </div>
+    </div>
+    </div>
+    ";
+}
+$err = curl_error($curl);
+
+curl_close($curl);
+
+?>
+
+
 </body> 
 </html>
  

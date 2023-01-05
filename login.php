@@ -25,14 +25,18 @@ if(!empty($_POST)){
         }
 
         if($user["type"] === "admin"){
+
             header("location: admin.php");
+
             $_SESSION["user"] = [
                 "id" => $user["id"],
                 "username" => $user["username"],
                 "type" => $user["type"]
             ];
         }else{
+
             header("location: index.php");
+            
             $_SESSION["user"] = [
                 "id" => $user["id"],
                 "username" => $user["username"],

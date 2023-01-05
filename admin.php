@@ -85,7 +85,7 @@ if(isset($_GET["supprimeChoix"]) && !empty($_GET["supprimeChoix"])){
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
-    <title>Document</title>
+    <title>Panneau </title>
 </head>
 <body>
 <a href="logout.php">Deconnexion</a>
@@ -131,7 +131,7 @@ if(isset($_GET["supprimeChoix"]) && !empty($_GET["supprimeChoix"])){
 <h2>Table des participants</h2>
     <table class="table table-dark ">
         <thead>
-            <tr>
+            <tr style='text-align:center'>
                 <th>ID</th>
                 <th>Email utilisateur</th>
                 <th>validation choix de la chanson</th>
@@ -147,7 +147,7 @@ if(isset($_GET["supprimeChoix"]) && !empty($_GET["supprimeChoix"])){
 
         <?php 
 
-            $requete = $connexion->query("SELECT users.id,email,statutChoixChanson,statutEnvoiChanson,statutPaiement,choix,ChansonEnvoyée FROM `users` INNER JOIN `choixMusique` ON users.id = choixMusique.id_user");
+            $requete = $connexion->query("SELECT users.id,email,statutChoixChanson,statutEnvoiChanson,statutPaiement,artiste,titre,img,ChansonEnvoyée FROM `users` INNER JOIN `choixMusique` ON users.id = choixMusique.id_user");
            
             while ($data = $requete->fetch()) {
                 echo "<tr>";
@@ -162,7 +162,7 @@ if(isset($_GET["supprimeChoix"]) && !empty($_GET["supprimeChoix"])){
                  echo "<td style='color:red;fontSize:1.5em;'>Choix de la chanson validé ou <br> <a href='admin.php?annuleChoix=". $data['id'] ."' >Annuler</a></td>";
                      } 
                 // Partie pour supprimer le choix du participant en cas de non-conformité ou erreur
-                echo "<td>" . $data["choix"] .  "<br>
+                echo "<td style='text-align:center'> <img style='width:200px' src='" .$data["img"]. "' <br><br>" .$data["artiste"]. "<br>" .$data["titre"] ." <br>
                 <a href='admin.php?supprimeChoix=" .$data['id'] . "'>Supprimer</a></td>";
 
                  // on vérifie si le statut pour l'envoi de la chanson n'est pas déjà différent de 1 et que le choix de la chanson est validé (1)
